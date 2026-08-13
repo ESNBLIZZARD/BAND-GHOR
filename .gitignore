@@ -1,0 +1,18 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+# Test and scratch scripts
+check_db*.ts
+test_*.js
+*.cjs
+fast_fetch2.js
+parsed_*.json
+populated_*.json
+user_*.json
+metadata.json
+firebase-applet-config.json

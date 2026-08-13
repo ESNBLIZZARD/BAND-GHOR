@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-bengali: "Noto Serif Bengali", ui-serif, Georgia, serif;
+}
+
+@layer utilities {
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* CSS Performant Animations for Stage Lighting */
+@keyframes stage-sweep-left {
+  0% { transform: rotate(-10deg); opacity: 0.2; }
+  50% { transform: rotate(30deg); opacity: 0.5; }
+  100% { transform: rotate(-10deg); opacity: 0.2; }
+}
+
+@keyframes stage-sweep-right {
+  0% { transform: rotate(10deg); opacity: 0.2; }
+  50% { transform: rotate(-30deg); opacity: 0.5; }
+  100% { transform: rotate(10deg); opacity: 0.2; }
+}
+
+@keyframes stage-flicker {
+  0%, 100% { opacity: 0.1; transform: scale(1) translateX(-50%); }
+  50% { opacity: 0.3; transform: scale(1.1) translateX(-50%); }
+}
+
+.animate-sweep-left {
+  animation: stage-sweep-left 8s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-sweep-right {
+  animation: stage-sweep-right 11s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-flicker {
+  animation: stage-flicker 4s ease-in-out infinite;
+  will-change: transform, opacity;
+}
