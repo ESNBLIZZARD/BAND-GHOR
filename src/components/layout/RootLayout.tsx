@@ -16,6 +16,7 @@ export function RootLayout() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const isHome = location.pathname === '/';
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [playerError, setPlayerError] = useState<string | null>(null);
   const songIdToPlay = searchParams.get('songId');
@@ -41,51 +42,51 @@ export function RootLayout() {
   }, [currentTrack?.artworkUrl, setDominantColor]);
 
   useEffect(() => {
-    // Start fetching and apply an artificial aesthetic delay
     Promise.all([
       loadFeaturedTracks(),
-      new Promise(resolve => setTimeout(resolve, 2500))
-    ]).then(async () => {
-      setIsInitializing(false);
+      new Promise(resolve => setTimeout(resolve, 1500))
+    ]).then(() => {
+      setIsDataLoaded(true);
+    });
+  }, [loadFeaturedTracks]);
+
+  const handleEnterApp = async () => {
+    setIsInitializing(false);
+    if (!hasAttemptedPlay.current) {
+      hasAttemptedPlay.current = true;
       
-      if (!hasAttemptedPlay.current) {
-        hasAttemptedPlay.current = true;
-        
-        if (queueParam) {
-           const trackIds = queueParam.split(',');
-           try {
-             // Fetch all tracks in parallel
-             const trackPromises = trackIds.map(id => 
-               fetch(`/api/tracks/${id}`).then(res => res.ok ? res.json() : null)
-             );
-             const tracks = (await Promise.all(trackPromises)).filter(Boolean);
-             if (tracks.length > 0) {
-               usePlayerStore.getState().setQueue(tracks);
-               usePlayerStore.getState().play(tracks[0]);
-             }
-           } catch (error) {
-             console.error("Failed to load shared queue", error);
+      if (queueParam) {
+         const trackIds = queueParam.split(',');
+         try {
+           const trackPromises = trackIds.map(id => 
+             fetch(`/api/tracks/${id}`).then(res => res.ok ? res.json() : null)
+           );
+           const tracks = (await Promise.all(trackPromises)).filter(Boolean);
+           if (tracks.length > 0) {
+             usePlayerStore.getState().setQueue(tracks);
+             usePlayerStore.getState().play(tracks[0]);
            }
-        } else if (songIdToPlay) {
-          try {
-            const res = await fetch(`/api/tracks/${songIdToPlay}`);
-            if (res.ok) {
-              const track = await res.json();
-              play(track);
-            }
-          } catch (error) {
-            console.error("Failed to auto-play shared track", error);
+         } catch (error) {
+           console.error("Failed to load shared queue", error);
+         }
+      } else if (songIdToPlay) {
+        try {
+          const res = await fetch(`/api/tracks/${songIdToPlay}`);
+          if (res.ok) {
+            const track = await res.json();
+            play(track);
           }
-        } else {
-          // Default: play first track
-          const queue = usePlayerStore.getState().queue;
-          if (queue.length > 0) {
-            usePlayerStore.getState().play(queue[0]);
-          }
+        } catch (error) {
+          console.error("Failed to auto-play shared track", error);
+        }
+      } else {
+        const queue = usePlayerStore.getState().queue;
+        if (queue.length > 0) {
+          usePlayerStore.getState().play(queue[0]);
         }
       }
-    });
-  }, [loadFeaturedTracks, songIdToPlay, queueParam, play]);
+    }
+  };
 
   return (
     <div className="relative min-h-screen bg-transparent flex flex-col text-[#F0F0F0] font-sans overflow-hidden selection:bg-white/20">
@@ -96,7 +97,8 @@ export function RootLayout() {
             initial={{ opacity: 1 }}
             exit={{ opacity: 0, filter: 'blur(20px)', scale: 1.1 }}
             transition={{ duration: 1.2, ease: [0.23, 1, 0.32, 1] }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black cursor-pointer"
+            onClick={isDataLoaded ? handleEnterApp : undefined}
           >
             <div className="flex flex-col items-center">
               <motion.div
@@ -110,16 +112,33 @@ export function RootLayout() {
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="text-[10px] uppercase tracking-[0.5em] text-neutral-500 mb-6"
               >
-                Initializing
+                {isDataLoaded ? "Ready" : "Initializing"}
               </motion.div>
               <motion.h1 
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 1, delay: 0.4, ease: [0.23, 1, 0.32, 1] }}
-                className="text-4xl md:text-6xl font-normal text-white uppercase tracking-[0.2em] font-sans"
+                className="text-4xl md:text-6xl font-normal text-white uppercase tracking-[0.2em] font-sans mb-12"
               >
                 Bandghor
               </motion.h1>
+
+              <AnimatePresence>
+                {isDataLoaded && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="mt-8"
+                  >
+                    <button 
+                      onClick={handleEnterApp}
+                      className="px-8 py-3 bg-white text-black font-medium tracking-widest uppercase text-sm rounded-full hover:bg-neutral-200 transition-colors hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(255,255,255,0.3)]"
+                    >
+                      Listen to Bangla Rock
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </motion.div>
         )}

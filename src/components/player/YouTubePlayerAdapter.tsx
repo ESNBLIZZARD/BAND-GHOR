@@ -41,16 +41,39 @@ export function YouTubePlayerAdapter() {
     } else {
       setIsApiReady(true);
     }
+
+    // Global listener to unlock audio if autoplay is blocked by the browser
+    const unlockAudio = () => {
+      const store = usePlayerStore.getState();
+      if (store.isPlaying && playerRef.current && playerRef.current.getPlayerState) {
+        const state = playerRef.current.getPlayerState();
+        if (state !== window.YT.PlayerState.PLAYING && state !== window.YT.PlayerState.BUFFERING) {
+          playerRef.current.playVideo();
+        }
+      }
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
+
+    document.addEventListener('click', unlockAudio);
+    document.addEventListener('touchstart', unlockAudio);
+
+    return () => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('touchstart', unlockAudio);
+    };
   }, []);
 
   // Initialize Player when API is ready
   useEffect(() => {
     if (isApiReady && !playerRef.current) {
+      const initialTrackId = usePlayerStore.getState().currentTrack?.youtubeVideoId;
       playerRef.current = new window.YT.Player('youtube-player', {
         height: '1',
         width: '1',
+        videoId: initialTrackId || '',
         playerVars: {
-          autoplay: 0,
+          autoplay: 1,
           controls: 0,
           disablekb: 1,
           fs: 0,
@@ -92,6 +115,11 @@ export function YouTubePlayerAdapter() {
                 break;
               case window.YT.PlayerState.ENDED:
                 playNext();
+                break;
+              case window.YT.PlayerState.UNSTARTED:
+                if (usePlayerStore.getState().isPlaying) {
+                  event.target.playVideo();
+                }
                 break;
               default:
                 break;
