@@ -1,6 +1,6 @@
 import express from "express";
-import { db } from "../src/db/index.ts";
-import { tracks, bands } from "../src/db/schema.ts";
+import { db } from "../src/db/index.js";
+import { tracks, bands } from "../src/db/schema.js";
 import { eq, ilike, or } from "drizzle-orm";
 
 const app = express();
